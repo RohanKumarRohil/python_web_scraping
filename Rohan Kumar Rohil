@@ -1,0 +1,58 @@
+import requests, warnings
+from bs4 import BeautifulSoup
+warnings.filterwarnings("ignore")
+
+#Function to make & return a list of all quotes on the website
+def getQuotesFromPage(url):
+    r = requests.get(url)
+    html = r.text
+    soup = BeautifulSoup(html)
+    lst_of_spans = soup.findAll(name = 'span', attrs = {"class" : "text", "itemprop" : "text"})
+#Made a list of all the span tags
+    lst_of_quotes = []
+    for span in lst_of_spans:
+        quote = span.getText()     #Extracting the text (quote) out of the span tag and storing
+        lst_of_quotes.append(quote[1 : len(quote) - 1]) #Appending this quote to the list of quotes
+    return lst_of_quotes
+
+#Function to get list of all anchor tags with text ‘Next’ & return their URLs
+def getNextAnchorFromPage(url):
+    r = requests.get(url)
+    html = r.text
+    soup = BeautifulSoup(html)
+    lst_of_hrefs = soup.findAll(name = 'a')
+    lst_of_href_texts = [href.getText() for href in lst_of_hrefs] #Makes a list of all anchor texts
+    
+    try:
+        next_href_index = lst_of_href_texts.index('Next →')  #Makes a list of the indices of ‘Next’ tags
+    except ValueError: #For the last page
+        #print('No next anchor') 
+        return None
+    
+    next_href = lst_of_hrefs[next_href_index] #Makes a list of tags with text ‘Next’
+    return 'http://quotes.toscrape.com' + next_href.attrs['href'] #Returns URL of corresponding webpage
+
+#Function to scrap the quotes from website & returning the complete list of quotes
+def Scraper(url = 'http://quotes.toscrape.com/page/1/'):
+    lst_of_quotes = []
+    new_url = url
+    while True:
+        print("Currently scraping " + new_url)
+        lst_of_quotes.extend(getQuotesFromPage(new_url))
+#Adds list of quotes from new page to existing list
+        new_url = getNextAnchorFromPage(new_url)
+        if new_url is None:
+            break
+    return lst_of_quotes
+
+quotes = Scraper()      #List named ‘quotes’ has all the quotes
+print(quotes)       #Printing all the scraped quotes!
+
+#Function to write ‘quotes’ in a file
+#File path would vary from PC to PC, so making this a comment; you may use this after entering a suitable path (for your PC)
+#def writeQuotesToFile(quotes, filePath = "C:/Users/Rohan/Documents/quotes.txt"):
+#    fp = open(filePath, 'w')
+#    fp.write("\n".join(quotes))
+#    fp.close()
+
+#writeQuotesToFile(quotes)
