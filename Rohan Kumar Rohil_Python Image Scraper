@@ -1,0 +1,26 @@
+import requests, warnings
+from bs4 import BeautifulSoup
+from urllib3 import PoolManager
+warnings.filterwarnings("ignore")
+
+def create_soup(url):     #Converts HTML string into a BeautifulSoup object named soup
+    http = urllib3.PoolManager()
+    response = http.request('GET', url)
+    soup = BeautifulSoup(response.data)
+    return soup
+
+def GetImagesFromPage(url):    #Gets the source URL for each image
+    soup = create_soup(url)
+    images = [img for img in soup.findAll('img')]
+    print ('Downloading images to current working directory.')
+    image_links = [each.get('src') for each in images]
+    
+    for each in image_links:
+        print('Downloading ' + each)
+        file_path=os.getcwd() + each.split('/')[-1]
+        #Images would be saved in current working directory.
+        #File path would vary from PC to PC, so making this a comment; you may use this after entering a suitable path (for your PC)
+        #file_path='C:\\Users\\Rohan\\Documents\\Manga_Images\\' + each.split('/')[-1]
+        DownloadImage(each, file_path)
+
+image_links = GetImagesFromPage('http://mangafreak.com/')
